@@ -1,15 +1,22 @@
 {
-  "short_name": "Pomodoro Clock",
-  "name": "Pomodoro Clock",
+  "short_name": "Pomodoro",
+  "name": "Manage your time with the Pomodoro Clock.",
+  "description": "Pomodoro Timer for use with the Pomodoro Technique.",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/images/icons-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/images/icons-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "background_color": "#C20C19",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "scope": "/",
+  "theme_color": "#C20C19"
 }

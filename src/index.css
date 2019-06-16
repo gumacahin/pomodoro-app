@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css?family=Lobster');
+
+body {
+  color: #f2e4cb;
+  background: #C20C19;
+  font-family: 'Lobster', cursive;
+}
+
+button {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #228528;
+  outline: none;
+}
+
+#break-length, #time-left, #session-length {
+  color: #FF5E17;
+  background: #ffffff;
+}
+
+footer a {
+  color: #ffffff;
+}

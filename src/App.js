@@ -1,8 +1,12 @@
 import React, { Component } from 'react';
-import './App.css';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowUp, faArrowDown, faRedo, faPlay, faPause } from '@fortawesome/free-solid-svg-icons'
+import alarm from './Alarm_Clock.mp3';
+import BreakLength from './BreakLength';
+import SessionLength from './SessionLength';
+import Clock from './Clock';
+import AdjustingInterval from './AdjustingInterval';
 
 library.add(faArrowUp);
 library.add(faArrowDown);
@@ -10,7 +14,7 @@ library.add(faRedo);
 library.add(faPlay);
 library.add(faPause);
 
-const AUDIO_SRC = 'https://dl.dropboxusercontent.com/s/237aouv31ikt7li/Alarm_Clock.mp3?dl=0';
+const TITLE = 'Pomodoro Clock';
 
 class Pomodoro extends Component {
   constructor(props) {
@@ -19,10 +23,11 @@ class Pomodoro extends Component {
       breakLength: this.props.breakLength,
       sessionLength: this.props.sessionLength,
       timeLeft: this.props.sessionLength * 60,
-      interval: null,
       started: false,
-      mode: 'session'
+      paused: false,
+      mode: 'Session'
     };
+
 
     this.breakIncrement = this.breakIncrement.bind(this);
     this.breakDecrement = this.breakDecrement.bind(this);
@@ -30,40 +35,26 @@ class Pomodoro extends Component {
     this.sessionDecrement = this.sessionDecrement.bind(this);
     this.reset = this.reset.bind(this);
     this.tick = this.tick.bind(this);
-    this.startStop = this.startStop.bind(this);
+    this.playPause = this.playPause.bind(this);
+
+    this.timer = new AdjustingInterval(this.tick, 1000, () => { console.log('Too much drift!'); })
   }
 
   render() {
+    const {sessionLength, breakLength, mode, timeLeft, paused, started} = this.state;
     return (
-      <div id="PomodoroApp">
-        <div id="title">Pomorodo Clock</div>
-        <div id="break-session-wrapper">
-            <div className="adjuster">
-              <div id="break-label">Break Length</div>
-              <div className="adjuster-ui">
-                <button onClick={this.breakIncrement} id="break-increment"><FontAwesomeIcon icon="arrow-up" /></button>
-                <div id="break-length">{ this.state.breakLength }</div>
-                <button onClick={this.breakDecrement} id="break-decrement"><FontAwesomeIcon icon="arrow-down" /></button>
-              </div>
-            </div>
-            <div className="adjuster">
-              <div id="session-label">Session Length</div>
-              <div className="adjuster-ui">
-                <button onClick={this.sessionIncrement} id="session-increment"><FontAwesomeIcon icon="arrow-up" /></button>
-                <div id="session-length">{ this.state.sessionLength }</div>
-                <button onClick={this.sessionDecrement} id="session-decrement"><FontAwesomeIcon icon="arrow-down"/></button>
-              </div>
-            </div>
+      <div className="container-fluid" id="PomodoroApp">
+        <h1 id="title">{TITLE}</h1>
+        <div className="row" id="break-session-wrapper">
+            <BreakLength breakIncrement={this.breakIncrement} breakDecrement={this.breakDecrement} breakLength={breakLength} />
+            <SessionLength sessionIncrement={this.sessionIncrement} sessionDecrement={this.sessionDecrement} sessionLength={sessionLength} />
         </div>
-        <div id="timer-wrapper">
-          <div id="timer-label">{this.state.mode}</div>
-          <div id="time-left">{ this.formatTime(this.state.timeLeft) }</div>
-        </div>
+        <Clock mode={mode} timeLeft={timeLeft} />
         <div id="buttons-wrapper">
-          <button onClick={this.startStop} id="start_stop">{ this.state.interval ? <FontAwesomeIcon icon="pause" /> : <FontAwesomeIcon icon="play" /> }</button>
-          <button onClick={this.reset} id="reset"><FontAwesomeIcon icon="redo" /></button>
+          <button onClick={this.playPause} id="start_stop"><span class="sr-only">Start/Stop</span>{ (paused || !started)  ? <FontAwesomeIcon icon="play" /> : <FontAwesomeIcon icon="pause" /> }</button>
+          <button onClick={this.reset} id="reset"><span class="sr-only">Reset</span><FontAwesomeIcon icon="redo" /></button>
         </div>
-        <audio id="beep" src={AUDIO_SRC} type="audio/mp3" />
+        <audio id="beep" src={alarm} type="audio/mp3" />
       </div>
     );
   }
@@ -105,15 +96,15 @@ class Pomodoro extends Component {
   }
 
   reset() {
-    clearInterval(this.state.interval);
+    this.timer.stop();
     document.getElementById('beep').load();
     this.setState({
       breakLength: this.props.breakLength,
       sessionLength: this.props.sessionLength,
       timeLeft: this.props.sessionLength * 60,
-      interval: null,
       started: false,
-      mode: 'session'
+      paused: false,
+      mode: 'Session'
     });
   }
 
@@ -125,6 +116,12 @@ class Pomodoro extends Component {
       this.beep();
       this.switchMode();
     }
+    this.setTitle();
+  }
+
+  setTitle() {
+    let time = this.formatTime(this.state.timeLeft);
+    document.getElementsByTagName('title')[0].innerText = this.state.mode + '—' + time + '—' + TITLE
   }
 
   formatTime(seconds) {
@@ -133,36 +130,37 @@ class Pomodoro extends Component {
     return  (mins < 10 ? '0' : '' ) + mins + ":" + (secs < 10 ? '0' : '') + secs;
   }
 
-  startStop() {
-    if (!this.state.started) {
-      this.setState({
-        started: true,
-        timeLeft: this.state.sessionLength * 60
-  
-      });
-    }
-
-    if (this.state.interval === null) {
-      let interval = setInterval(this.tick, 1000);
-      this.setState({ interval });
+  playPause() {
+    this.setState((state) => {
+      if (state.started === false) {
+        return {
+          paused: false,
+          started: true,
+          timeLeft: state.sessionLength * 60
+        }
+      }
+      return {
+        paused: !state.paused
+      }
+    }, () => {
+      if (this.state.paused) {
+        this.timer.stop();
+        return;
+      }
+      this.timer.start();
       return;
-    }
-
-    clearInterval(this.state.interval);
-    this.setState({
-      interval: null
     });
   }
 
   switchMode() {
-    if (this.state.mode === 'session') {
+    if (this.state.mode === 'Session') {
       this.setState({
-        mode: 'break',
+        mode: 'Break',
         timeLeft: this.state.breakLength * 60
       });
     } else {
       this.setState({
-        mode: 'session',
+        mode: 'Session',
         timeLeft: this.state.sessionLength * 60
       });
     }
