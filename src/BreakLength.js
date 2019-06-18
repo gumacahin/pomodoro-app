@@ -9,7 +9,7 @@ export default class BreakLength extends React.Component {
         <h2 className="text-nowrap" id="break-label">Break Length</h2>
         <div className="adjuster-ui">
           <button onClick={breakIncrement} id="break-increment"><span className="sr-only">increase break length</span><FontAwesomeIcon icon="arrow-up" /></button>
-          <div className="h1 rounded" id="break-length">{ breakLength }</div>
+          <div className="h1 rounded d-inline-block w-25" id="break-length">{ breakLength }</div>
           <button onClick={breakDecrement} id="break-decrement"><span className="sr-only">decrease break length</span><FontAwesomeIcon icon="arrow-down" /></button>
         </div>
       </div>
